@@ -87,7 +87,7 @@
   [::pom/license
    (when name [::pom/name name])
    (when url [::pom/url url])
-   (when conj [::pom/distribution distribution])
+   (when distribution [::pom/distribution distribution])
    (when comments [::pom/comments comments])])
 
 (defn- gen-repos

@@ -83,13 +83,25 @@
    (when releases (to-repo-policy ::pom/releases releases))
    (when snapshots (to-repo-policy ::pom/snapshots snapshots))])
 
+(defn- to-license [{:as license :keys [name url distribution comments]}]
+  [::pom/license
+   (when name [::pom/name name])
+   (when url [::pom/url url])
+   (when conj [::pom/distribution distribution])
+   (when comments [::pom/comments comments])])
+
 (defn- gen-repos
   [repos]
   [::pom/repositories
    (map to-repo repos)])
 
+(defn- gen-licenses
+  [licenses]
+  [::pom/licenses
+   (map to-license licenses)])
+
 (defn- gen-pom
-  [{:keys [deps src-paths resource-paths repos group artifact version scm]
+  [{:keys [deps src-paths resource-paths repos group artifact version scm licenses]
     :or {version "0.1.0"}}]
   (let [[path & paths] src-paths
         {:keys [connection developerConnection tag url]} scm]
@@ -116,7 +128,9 @@
           (when connection [::pom/connection connection])
           (when developerConnection [::pom/developerConnection developerConnection])
           (when tag [::pom/tag tag])
-          (when url [::pom/url url])])])))
+          (when url [::pom/url url])])
+       (when (seq licenses)
+         (gen-licenses licenses))])))
 
 (defn- make-xml-element
   [{:keys [tag attrs] :as node} children]
@@ -186,6 +200,12 @@
     (xml-update pom [::pom/version] (xml/sexp-as-element [::pom/version version]))
     pom))
 
+(defn- replace-licenses
+  [pom licenses]
+  (if (seq licenses)
+    (xml-update pom [::pom/licenses] (xml/sexp-as-element [::pom/licenses (gen-licenses licenses)]))
+    pom))
+
 (defn- replace-scm
   [pom {:keys [connection developerConnection tag url] :as scm}]
   (if scm
@@ -221,7 +241,7 @@
 
 (defn write-pom
   [params]
-  (let [{:keys [basis class-dir target src-pom lib version scm src-dirs resource-dirs repos]} params
+  (let [{:keys [basis class-dir target src-pom lib version scm src-dirs resource-dirs repos licenses]} params
         {:keys [libs]} basis
         root-deps (libs->deps libs)
         src-pom-file (api/resolve-path (or src-pom "pom.xml"))
@@ -235,6 +255,7 @@
                   (replace-resources resource-dirs)
                   (replace-repos repos)
                   (replace-lib lib)
+                  (replace-licenses licenses)                  
                   (replace-version version)
                   (replace-scm scm)))
               (gen-pom
@@ -244,7 +265,8 @@
                    :resource-paths resource-dirs
                    :repos repos
                    :group (namespace lib)
-                   :artifact (name lib)}
+                   :artifact (name lib)
+                   :licenses licenses}
                   version (assoc :version version)
                   scm (assoc :scm scm))))
         pom-dir-file (file/ensure-dir

@@ -59,6 +59,10 @@
                    :version "1.2.3"
                    :class-dir "target/classes"
                    :src-dirs ["src"]
+                   :licenses [{:name "Apache-2.0"
+                               :url "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                               :distribution "repo"
+                               :comments "lorem ipsum"}]
                    :resource-dirs ["resources"]
                    :basis (api/create-basis nil)
                    :scm {:tag "v1.2.3" :url "https://github.com/example/p1"}})
@@ -81,6 +85,7 @@
         [::pom/scm ::pom/url] ["https://github.com/example/p1"])
       (is (= 2 (count (xml-path-val pom [::pom/dependencies]))))
       (is (= 1 (count (xml-path-val pom [::pom/repositories]))))
+      (is (= 1 (count (xml-path-val pom [::pom/licenses]))))
       ;; check properties out
       (is (.exists prop-out))
       (is (submap? {"groupId" "test", "artifactId" "p1", "version" "1.2.3"} props)))))
@@ -97,7 +102,11 @@
                    :resource-dirs ["resources"]
                    :basis (api/create-basis nil)
                    :scm {:tag "v1.2.3"
-                         :url "https://github.com/example/p1"}})
+                         :url "https://github.com/example/p1"}
+                   :licenses [{:name "Apache-2.0"
+                               :url "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                               :distribution "repo"
+                               :comments "lorem ipsum"}]})
     (let [pom-dir (jio/file (project-path "target/classes/META-INF/maven/test/p2"))
           pom-out (jio/file pom-dir "pom.xml")
           pom (read-xml pom-out)
@@ -116,6 +125,7 @@
         [::pom/scm ::pom/tag] ["v1.2.3"])
       (is (= 2 (count (xml-path-val pom [::pom/dependencies]))))
       (is (= 1 (count (xml-path-val pom [::pom/repositories]))))
+      (is (= 1 (count (xml-path-val pom [::pom/licenses]))))
       ;; check properties out
       (is (.exists prop-out))
       (is (submap? {"groupId" "test", "artifactId" "p2", "version" "1.2.3"} props)))))
